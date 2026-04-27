@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BILAL">
+<meta name="theme-color" content="#0C0C0C">
+<title>BILAL — May Lock-In</title>
+<link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiQklMQUwgV2VsbG5lc3MiLCJzaG9ydF9uYW1lIjoiQklMQUwiLCJzdGFydF91cmwiOiIuIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiIzBDMEMwQyIsInRoZW1lX2NvbG9yIjoiIzBDMEMwQyJ9">
+<link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxODAiIGhlaWdodD0iMTgwIj48cmVjdCB3aWR0aD0iMTgwIiBoZWlnaHQ9IjE4MCIgcng9IjQwIiBmaWxsPSIjMEMwQzBDIi8+PHRleHQgeD0iOTAiIHk9IjEyMCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEwMCIgZm9udC13ZWlnaHQ9IjkwMCIgZmlsbD0iI0Q0QTg0MyIgdGV4dC1hbmNob3I9Im1pZGRsZSI+QjwvdGV4dD48L3N2Zz4=">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0C0C0C;overflow-x:hidden}
+@keyframes timerPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.03)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+.fi{animation:fadeIn .3s ease forwards}
+input[type=range]{-webkit-appearance:none;background:transparent;width:100%}
+input[type=range]::-webkit-slider-track{height:6px;border-radius:3px;background:#2a2a2a}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#d4a843;margin-top:-8px}
+*{-webkit-tap-highlight-color:transparent;box-sizing:border-box}
+body{overscroll-behavior:none}
+.shim{background:linear-gradient(90deg,#222 25%,#333 50%,#222 75%);background-size:200% 100%;animation:shimmer 1.5s infinite}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useCallback,useRef}=React;
+
+/* ═══════════════ LOCAL AI DATABASES ═══════════════ */
+const FOOD_DB={
+"chicken":{cal:165,p:31,c:0,f:4,serving:200},"chicken breast":{cal:165,p:31,c:0,f:4,serving:200},
+"rice":{cal:130,p:3,c:28,f:0,serving:200},"white rice":{cal:130,p:3,c:28,f:0,serving:200},"brown rice":{cal:112,p:2,c:24,f:1,serving:200},
+"pasta":{cal:131,p:5,c:25,f:1,serving:200},"spaghetti":{cal:131,p:5,c:25,f:1,serving:200},
+"egg":{cal:155,p:13,c:1,f:11,serving:100},"eggs":{cal:155,p:13,c:1,f:11,serving:150},
+"oats":{cal:389,p:17,c:66,f:7,serving:80},"oatmeal":{cal:389,p:17,c:66,f:7,serving:80},
+"salmon":{cal:208,p:20,c:0,f:13,serving:200},"fish":{cal:180,p:22,c:0,f:10,serving:200},"tuna":{cal:130,p:29,c:0,f:1,serving:150},
+"steak":{cal:271,p:26,c:0,f:18,serving:200},"beef":{cal:250,p:26,c:0,f:15,serving:200},"ground beef":{cal:250,p:26,c:0,f:15,serving:200},"ground turkey":{cal:170,p:21,c:0,f:9,serving:200},
+"turkey":{cal:170,p:21,c:0,f:9,serving:200},
+"bread":{cal:265,p:9,c:49,f:3,serving:60},"toast":{cal:265,p:9,c:49,f:3,serving:60},
+"banana":{cal:89,p:1,c:23,f:0,serving:120},"apple":{cal:52,p:0,c:14,f:0,serving:180},
+"broccoli":{cal:35,p:3,c:7,f:0,serving:150},"vegetables":{cal:40,p:2,c:8,f:0,serving:150},"veggies":{cal:40,p:2,c:8,f:0,serving:150},"salad":{cal:20,p:1,c:4,f:0,serving:200},
+"potato":{cal:77,p:2,c:17,f:0,serving:250},"sweet potato":{cal:86,p:2,c:20,f:0,serving:250},
+"avocado":{cal:160,p:2,c:9,f:15,serving:100},
+"cheese":{cal:402,p:25,c:1,f:33,serving:40},"greek yogurt":{cal:59,p:10,c:4,f:0,serving:200},"yogurt":{cal:59,p:10,c:4,f:0,serving:200},
+"milk":{cal:42,p:3,c:5,f:1,serving:250},"protein shake":{cal:120,p:25,c:3,f:2,serving:300},"whey":{cal:120,p:25,c:3,f:2,serving:35},
+"peanut butter":{cal:588,p:25,c:20,f:50,serving:32},"pb":{cal:588,p:25,c:20,f:50,serving:32},
+"pizza":{cal:266,p:11,c:33,f:10,serving:150},"burger":{cal:295,p:17,c:24,f:14,serving:200},"fries":{cal:312,p:3,c:41,f:15,serving:150},
+"shawarma":{cal:180,p:15,c:15,f:7,serving:300},"wrap":{cal:200,p:12,c:25,f:6,serving:250},
+"sandwich":{cal:250,p:12,c:30,f:9,serving:200},"sub":{cal:250,p:14,c:35,f:7,serving:250},
+"granola":{cal:471,p:10,c:64,f:20,serving:50},"berries":{cal:57,p:1,c:14,f:0,serving:100},
+"rice cake":{cal:387,p:8,c:81,f:3,serving:30},"protein bar":{cal:200,p:20,c:22,f:7,serving:60},
+"olive oil":{cal:884,p:0,c:0,f:100,serving:15},"nuts":{cal:607,p:20,c:20,f:54,serving:30},"almonds":{cal:579,p:21,c:22,f:50,serving:30},
+"honey":{cal:304,p:0,c:82,f:0,serving:20},"sugar":{cal:387,p:0,c:100,f:0,serving:10},
+"bacon":{cal:541,p:37,c:1,f:42,serving:40},"sausage":{cal:301,p:12,c:2,f:27,serving:80},
+"shrimp":{cal:99,p:24,c:0,f:0,serving:150},"tofu":{cal:76,p:8,c:2,f:5,serving:150},
+"lentils":{cal:116,p:9,c:20,f:0,serving:200},"beans":{cal:127,p:9,c:22,f:1,serving:150},
+"cereal":{cal:370,p:7,c:84,f:1,serving:40},"pancakes":{cal:227,p:6,c:28,f:10,serving:150},"waffle":{cal:291,p:8,c:33,f:14,serving:120},
+"soup":{cal:50,p:3,c:7,f:1,serving:400},"chili":{cal:110,p:8,c:10,f:4,serving:300},
+"smoothie":{cal:100,p:5,c:20,f:1,serving:400},"juice":{cal:45,p:1,c:11,f:0,serving:250},
+"coffee":{cal:2,p:0,c:0,f:0,serving:250},"latte":{cal:130,p:8,c:13,f:5,serving:350},
+"ice cream":{cal:207,p:4,c:24,f:11,serving:130},"chocolate":{cal:546,p:5,c:60,f:31,serving:40},
+"chips":{cal:536,p:7,c:53,f:35,serving:50},"popcorn":{cal:375,p:11,c:74,f:4,serving:40},
+"tortilla":{cal:306,p:8,c:50,f:8,serving:60},"naan":{cal:262,p:9,c:45,f:5,serving:90},
+"hummus":{cal:166,p:8,c:14,f:10,serving:60},"guacamole":{cal:160,p:2,c:9,f:15,serving:80},
+"soda":{cal:41,p:0,c:10,f:0,serving:355},"beer":{cal:43,p:0,c:4,f:0,serving:355},
+};
+
+function estimateMealLocal(description){
+  const desc=description.toLowerCase().replace(/[,\.!?]/g,' ');
+  const words=desc.split(/\s+/);
+  let matched=[];
+  // Try multi-word matches first, then single words
+  const keys=Object.keys(FOOD_DB).sort((a,b)=>b.length-a.length);
+  let remaining=desc;
+  for(const key of keys){
+    if(remaining.includes(key)){
+      matched.push({key,food:FOOD_DB[key]});
+      remaining=remaining.replace(key,'');
+    }
+  }
+  if(matched.length===0){
+    // Guess based on keywords
+    if(desc.includes('breakfast'))return{name:"Breakfast",cal:500,p:25,c:55,f:18};
+    if(desc.includes('lunch'))return{name:"Lunch",cal:600,p:35,c:60,f:20};
+    if(desc.includes('dinner'))return{name:"Dinner",cal:700,p:40,c:65,f:25};
+    if(desc.includes('snack'))return{name:"Snack",cal:250,p:10,c:30,f:10};
+    return{name:description,cal:500,p:25,c:50,f:15};
+  }
+  // Detect quantity multipliers
+  let multiplier=1;
+  const numMatch=desc.match(/(\d+)\s*(slice|piece|serving|scoop|cup|bowl)/i);
+  if(numMatch)multiplier=parseInt(numMatch[1])||1;
+  if(desc.includes('large')||desc.includes('big'))multiplier*=1.3;
+  if(desc.includes('small')||desc.includes('little')||desc.includes('half'))multiplier*=0.6;
+  if(desc.includes('double')||desc.includes('two')||desc.includes('2 '))multiplier*=2;
+
+  let total={cal:0,p:0,c:0,f:0};
+  const names=[];
+  matched.forEach(({key,food})=>{
+    const s=food.serving/100*multiplier;
+    total.cal+=Math.round(food.cal*s);
+    total.p+=Math.round(food.p*s);
+    total.c+=Math.round(food.c*s);
+    total.f+=Math.round(food.f*s);
+    names.push(key.charAt(0).toUpperCase()+key.slice(1));
+  });
+  return{name:names.join(' + '),cal:total.cal,p:total.p,c:total.c,f:total.f};
+}
+
+/* ═══════ LOCAL EXERCISE DETECTION ═══════ */
+const EX_KEYWORDS=[
+  {keys:["bench press","chest press","floor press"],primary:["Chest"],secondary:["Front Delts","Triceps"],reps:"6-8",sets:4},
+  {keys:["incline press","incline db","incline bench"],primary:["Chest","Front Delts"],secondary:["Triceps"],reps:"10-12",sets:3},
+  {keys:["decline press","decline bench"],primary:["Chest"],secondary:["Triceps"],reps:"8-10",sets:3},
+  {keys:["fly","flye","chest fly","pec fly","pec deck"],primary:["Chest"],secondary:[],reps:"12-15",sets:3},
+  {keys:["cable cross","crossover"],primary:["Chest"],secondary:["Front Delts"],reps:"12-15",sets:3},
+  {keys:["push up","pushup","push-up"],primary:["Chest"],secondary:["Front Delts","Triceps","Core"],reps:"12-20",sets:3},
+  {keys:["overhead press","shoulder press","military press","ohp"],primary:["Front Delts","Side Delts"],secondary:["Triceps","Upper Back"],reps:"8-10",sets:3},
+  {keys:["arnold press"],primary:["Front Delts","Side Delts"],secondary:["Triceps"],reps:"8-10",sets:3},
+  {keys:["lateral raise","side raise","lat raise"],primary:["Side Delts"],secondary:[],reps:"12-15",sets:3},
+  {keys:["front raise"],primary:["Front Delts"],secondary:[],reps:"12-15",sets:3},
+  {keys:["face pull"],primary:["Rear Delts","Upper Back"],secondary:[],reps:"15-20",sets:3},
+  {keys:["reverse fly","rear delt fly","reverse pec"],primary:["Rear Delts"],secondary:["Upper Back"],reps:"12-15",sets:3},
+  {keys:["shrug","trap"],primary:["Upper Back"],secondary:[],reps:"12-15",sets:3},
+  {keys:["upright row"],primary:["Side Delts","Upper Back"],secondary:["Biceps"],reps:"10-12",sets:3},
+  {keys:["tricep pushdown","rope pushdown","cable pushdown"],primary:["Triceps"],secondary:[],reps:"12-15",sets:3},
+  {keys:["tricep extension","overhead extension","skull crusher","skullcrusher"],primary:["Triceps"],secondary:[],reps:"10-12",sets:3},
+  {keys:["tricep dip","dip","bench dip"],primary:["Triceps","Chest"],secondary:["Front Delts"],reps:"8-12",sets:3},
+  {keys:["close grip bench"],primary:["Triceps","Chest"],secondary:["Front Delts"],reps:"8-10",sets:3},
+  {keys:["kickback","tricep kickback"],primary:["Triceps"],secondary:[],reps:"12-15",sets:3},
+  {keys:["bicep curl","barbell curl","ez curl","preacher curl"],primary:["Biceps"],secondary:[],reps:"10-12",sets:3},
+  {keys:["hammer curl"],primary:["Biceps"],secondary:[],reps:"10-12",sets:3},
+  {keys:["incline curl","incline db curl"],primary:["Biceps"],secondary:[],reps:"12",sets:3},
+  {keys:["concentration curl"],primary:["Biceps"],secondary:[],reps:"12-15",sets:3},
+  {keys:["cable curl"],primary:["Biceps"],secondary:[],reps:"12-15",sets:3},
+  {keys:["pull up","pullup","pull-up","chin up","chinup","chin-up"],primary:["Lats","Upper Back"],secondary:["Biceps","Rear Delts"],reps:"6-10",sets:4},
+  {keys:["lat pulldown","pulldown","pull down"],primary:["Lats"],secondary:["Biceps","Upper Back"],reps:"10-12",sets:3},
+  {keys:["barbell row","bent over row","pendlay"],primary:["Upper Back","Lats"],secondary:["Biceps","Lower Back","Rear Delts"],reps:"8-10",sets:4},
+  {keys:["cable row","seated row"],primary:["Upper Back"],secondary:["Lats","Biceps"],reps:"10-12",sets:3},
+  {keys:["dumbbell row","db row","single arm row","one arm row","kroc row"],primary:["Lats","Upper Back"],secondary:["Biceps","Rear Delts"],reps:"8-12",sets:3},
+  {keys:["t-bar row","t bar"],primary:["Upper Back","Lats"],secondary:["Biceps"],reps:"8-10",sets:3},
+  {keys:["back extension","hyperextension"],primary:["Lower Back","Glutes"],secondary:["Hamstrings"],reps:"12-15",sets:3},
+  {keys:["squat","back squat","front squat","goblet squat"],primary:["Quads","Glutes"],secondary:["Core","Lower Back","Hamstrings"],reps:"6-8",sets:4},
+  {keys:["leg press"],primary:["Quads","Glutes"],secondary:[],reps:"10-12",sets:3},
+  {keys:["hack squat"],primary:["Quads"],secondary:["Glutes"],reps:"10-12",sets:3},
+  {keys:["lunge","walking lunge","reverse lunge","split squat"],primary:["Quads","Glutes"],secondary:["Hamstrings","Core"],reps:"10/leg",sets:3},
+  {keys:["bulgarian split"],primary:["Quads","Glutes"],secondary:["Hamstrings","Core"],reps:"8-10/leg",sets:3},
+  {keys:["step up","step-up"],primary:["Quads","Glutes"],secondary:["Hamstrings"],reps:"10/leg",sets:3},
+  {keys:["leg extension","leg ext"],primary:["Quads"],secondary:[],reps:"12-15",sets:3},
+  {keys:["leg curl","hamstring curl","lying curl","seated curl"],primary:["Hamstrings"],secondary:[],reps:"10-12",sets:3},
+  {keys:["nordic curl","nordic hamstring"],primary:["Hamstrings"],secondary:[],reps:"6-8",sets:3},
+  {keys:["deadlift","sumo deadlift","conventional deadlift"],primary:["Hamstrings","Glutes","Lower Back"],secondary:["Quads","Core","Upper Back"],reps:"5-6",sets:4},
+  {keys:["romanian deadlift","rdl","stiff leg"],primary:["Hamstrings","Glutes"],secondary:["Lower Back"],reps:"8-10",sets:3},
+  {keys:["hip thrust","glute bridge"],primary:["Glutes","Hamstrings"],secondary:["Core","Lower Back"],reps:"8-10",sets:4},
+  {keys:["box jump","jump squat"],primary:["Quads","Glutes","Calves"],secondary:["Hamstrings","Core"],reps:"8",sets:3},
+  {keys:["calf raise","standing calf","seated calf"],primary:["Calves"],secondary:[],reps:"15",sets:4},
+  {keys:["donkey calf"],primary:["Calves"],secondary:[],reps:"15",sets:3},
+  {keys:["plank","side plank"],primary:["Core"],secondary:[],reps:"30-60s",sets:3,isCore:true},
+  {keys:["crunch","sit up","situp","bicycle crunch"],primary:["Core"],secondary:[],reps:"15-20",sets:3,isCore:true},
+  {keys:["leg raise","hanging leg","knee raise"],primary:["Core","Hip Flexors"],secondary:[],reps:"12-15",sets:3,isCore:true},
+  {keys:["ab wheel","ab rollout","rollout"],primary:["Core"],secondary:["Front Delts","Lats"],reps:"10-12",sets:3,isCore:true},
+  {keys:["woodchop","wood chop"],primary:["Core"],secondary:["Front Delts"],reps:"12/side",sets:3,isCore:true},
+  {keys:["pallof","anti-rotation"],primary:["Core"],secondary:[],reps:"20s/side",sets:3,isCore:true},
+  {keys:["russian twist"],primary:["Core"],secondary:[],reps:"20",sets:3,isCore:true},
+  {keys:["cable crunch"],primary:["Core"],secondary:[],reps:"15",sets:3,isCore:true},
+  {keys:["dead bug"],primary:["Core"],secondary:[],reps:"10/side",sets:3,isCore:true},
+  {keys:["v up","v-up"],primary:["Core","Hip Flexors"],secondary:[],reps:"12-15",sets:3,isCore:true},
+  {keys:["mountain climber"],primary:["Core","Hip Flexors"],secondary:["Quads"],reps:"20/side",sets:3,isCore:true},
+  {keys:["farmer walk","farmer carry"],primary:["Upper Back","Core"],secondary:["Glutes","Calves"],reps:"40m",sets:3},
+  {keys:["landmine press"],primary:["Front Delts","Chest"],secondary:["Core","Triceps"],reps:"10-12",sets:3},
+  {keys:["landmine row"],primary:["Upper Back","Lats"],secondary:["Biceps"],reps:"10-12",sets:3},
+  {keys:["hip abduction","abductor"],primary:["Glutes"],secondary:["Hip Flexors"],reps:"15",sets:3},
+  {keys:["hip adduction","adductor"],primary:["Hip Flexors"],secondary:["Glutes"],reps:"15",sets:3},
+  {keys:["good morning"],primary:["Hamstrings","Lower Back"],secondary:["Glutes"],reps:"10-12",sets:3},
+  {keys:["sumo squat"],primary:["Quads","Glutes"],secondary:["Hamstrings","Hip Flexors"],reps:"10-12",sets:3},
+];
+
+function detectExercise(name){
+  const n=name.toLowerCase().trim();
+  for(const ex of EX_KEYWORDS){
+    for(const k of ex.keys){
+      if(n.includes(k))return{name:name.charAt(0).toUpperCase()+name.slice(1),primary:ex.primary,secondary:ex.secondary,note:"",sets:ex.sets||3,reps:ex.reps||"10-12",isCore:ex.isCore||false};
+    }
+  }
+  // Fallback heuristic
+  let primary=[],secondary=[];
+  if(/curl/i.test(n)){primary=["Biceps"];}
+  else if(/press|push/i.test(n)){primary=["Chest","Front Delts"];secondary=["Triceps"];}
+  else if(/row|pull/i.test(n)){primary=["Upper Back","Lats"];secondary=["Biceps"];}
+  else if(/squat|lunge/i.test(n)){primary=["Quads","Glutes"];secondary=["Core"];}
+  else if(/raise/i.test(n)){primary=["Side Delts"];}
+  else if(/fly|flye/i.test(n)){primary=["Chest"];}
+  else if(/extension|pushdown|kickback/i.test(n)){primary=["Triceps"];}
+  else if(/calf/i.test(n)){primary=["Calves"];}
+  else if(/ab|core|crunch|plank/i.test(n)){primary=["Core"];}
+  else{primary=["Upper Back"];secondary=["Core"];}
+  return{name:name,primary,secondary,note:"",sets:3,reps:"10-12",isCore:primary.includes("Core")};
+}
+
+/* ═══════ COLORS & CONSTANTS ═══════ */
+const C={bg:"#0C0C0C",card:"#161616",cb:"#222",gold:"#D4A843",gd:"#D4A84366",grn:"#22C55E",gd2:"#22C55E22",red:"#EF4444",blu:"#3B82F6",pur:"#A855F7",txt:"#FFF",sub:"#777",mut:"#444"};
+const MUSCLES=["Chest","Front Delts","Side Delts","Rear Delts","Triceps","Biceps","Upper Back","Lats","Lower Back","Core","Quads","Hamstrings","Glutes","Calves","Hip Flexors"];
+const MACROS={gym:{cal:2500,p:155,c:280,f:75},soccer:{cal:2500,p:155,c:290,f:70},rest:{cal:2250,p:155,c:230,f:75}};
+
+const DEFAULT_WORKOUTS={
+  1:{title:"UPPER A",sub:"Chest · Shoulders · Triceps",exercises:[
+    {id:"1a",name:"Barbell Bench Press",sets:4,reps:"6–8",note:"Controlled tempo, full range",primary:["Chest"],secondary:["Front Delts","Triceps"]},
+    {id:"1b",name:"Seated DB Shoulder Press",sets:3,reps:"8–10",note:"Squeeze at top",primary:["Front Delts","Side Delts"],secondary:["Triceps","Upper Back"]},
+    {id:"1c",name:"Incline DB Press",sets:3,reps:"10–12",note:"30° incline",primary:["Chest","Front Delts"],secondary:["Triceps"]},
+    {id:"1d",name:"Cable Lateral Raises",sets:3,reps:"12–15",note:"Slow negatives",primary:["Side Delts"],secondary:[]},
+    {id:"1e",name:"Tricep Rope Pushdowns",sets:3,reps:"12–15",note:"Spread rope at bottom",primary:["Triceps"],secondary:[]},
+    {id:"1f",name:"Face Pulls",sets:3,reps:"15",note:"Never skip",primary:["Rear Delts","Upper Back"],secondary:[]},
+    {id:"1g",name:"Hanging Leg Raises",sets:3,reps:"12–15",note:"CORE — slow, no swinging",primary:["Core","Hip Flexors"],secondary:[],isCore:true},
+  ]},
+  3:{title:"LOWER A",sub:"Strength · Quads · Hams",exercises:[
+    {id:"3a",name:"Barbell Back Squat",sets:4,reps:"6–8",note:"Below parallel",primary:["Quads","Glutes"],secondary:["Core","Lower Back","Hamstrings"]},
+    {id:"3b",name:"Leg Curl Machine",sets:3,reps:"10–12",note:"Slow negative",primary:["Hamstrings"],secondary:[]},
+    {id:"3c",name:"Leg Press",sets:3,reps:"10–12",note:"Feet high & wide",primary:["Quads","Glutes"],secondary:[]},
+    {id:"3d",name:"Walking Lunges",sets:3,reps:"10/leg",note:"Long strides",primary:["Quads","Glutes"],secondary:["Hamstrings","Core"]},
+    {id:"3e",name:"Standing Calf Raises",sets:4,reps:"15",note:"Full stretch",primary:["Calves"],secondary:[]},
+    {id:"3f",name:"Cable Woodchops",sets:3,reps:"12/side",note:"CORE — rotational power",primary:["Core"],secondary:["Front Delts"],isCore:true},
+  ]},
+  4:{title:"UPPER B",sub:"Back · Biceps · Rear Delts",exercises:[
+    {id:"4a",name:"Pull-Ups / Lat Pulldown",sets:4,reps:"6–10",note:"Wide grip, chest to bar",primary:["Lats","Upper Back"],secondary:["Biceps","Rear Delts"]},
+    {id:"4b",name:"Barbell Bent-Over Row",sets:4,reps:"8–10",note:"Pull to navel",primary:["Upper Back","Lats"],secondary:["Biceps","Lower Back","Rear Delts"]},
+    {id:"4c",name:"Seated Cable Row",sets:3,reps:"10–12",note:"Squeeze shoulder blades",primary:["Upper Back"],secondary:["Lats","Biceps"]},
+    {id:"4d",name:"DB Hammer Curls",sets:3,reps:"10–12",note:"No swinging",primary:["Biceps"],secondary:[]},
+    {id:"4e",name:"Incline DB Curls",sets:3,reps:"12",note:"Deep stretch",primary:["Biceps"],secondary:[]},
+    {id:"4f",name:"Reverse Flyes",sets:3,reps:"15",note:"3D shoulders",primary:["Rear Delts"],secondary:["Upper Back"]},
+    {id:"4g",name:"Ab Wheel Rollouts",sets:3,reps:"10–12",note:"CORE — from knees",primary:["Core"],secondary:["Front Delts","Lats"],isCore:true},
+  ]},
+  6:{title:"LOWER B",sub:"Power · Glutes · Core",exercises:[
+    {id:"6a",name:"Barbell Hip Thrusts",sets:4,reps:"8–10",note:"2-sec pause at top",primary:["Glutes","Hamstrings"],secondary:["Core","Lower Back"]},
+    {id:"6b",name:"Bulgarian Split Squats",sets:3,reps:"8–10/leg",note:"DB in each hand",primary:["Quads","Glutes"],secondary:["Hamstrings","Core"]},
+    {id:"6c",name:"Hack Squat Machine",sets:3,reps:"10–12",note:"Deep, controlled",primary:["Quads"],secondary:["Glutes"]},
+    {id:"6d",name:"Box Jumps",sets:3,reps:"8",note:"Reset each rep",primary:["Quads","Glutes","Calves"],secondary:["Hamstrings","Core"]},
+    {id:"6e",name:"Nordic Hamstring Curls",sets:3,reps:"6–8",note:"Injury prevention",primary:["Hamstrings"],secondary:[]},
+    {id:"6f",name:"Seated Calf Raises",sets:3,reps:"15",note:"Hits soleus",primary:["Calves"],secondary:[]},
+    {id:"6g",name:"Pallof Press Hold",sets:3,reps:"20s/side",note:"CORE — anti-rotation",primary:["Core"],secondary:[],isCore:true},
+  ]},
+};
+
+const DEFAULT_SUPPS=[
+  {id:"creatine",name:"Creatine",dose:"5g",when:"Any time"},
+  {id:"vitd",name:"Vitamin D3",dose:"2000–4000 IU",when:"Morning"},
+  {id:"mag",name:"Magnesium",dose:"200–400mg",when:"Before bed"},
+  {id:"fish",name:"Fish Oil",dose:"1–2g EPA+DHA",when:"With meal"},
+];
+
+const SCHEDULE=[
+  {day:"Sun",type:"rest",title:"REST",sub:"Recovery · Meal Prep",icon:"🛌"},
+  {day:"Mon",type:"gym",title:"UPPER A",sub:"Chest · Shoulders · Triceps",icon:"🏋️"},
+  {day:"Tue",type:"soccer",title:"SOCCER",sub:"Match Day",icon:"⚽"},
+  {day:"Wed",type:"gym",title:"LOWER A",sub:"Strength · Quads · Hams",icon:"🏋️"},
+  {day:"Thu",type:"gym",title:"UPPER B",sub:"Back · Biceps · Rear Delts",icon:"🏋️"},
+  {day:"Fri",type:"soccer",title:"SOCCER",sub:"Match Day",icon:"⚽"},
+  {day:"Sat",type:"gym",title:"LOWER B",sub:"Power · Glutes · Core",icon:"🏋️"},
+];
+
+const QUICK_MEALS=[
+  {name:"Protein Shake",cal:350,p:32,c:35,f:12},{name:"Eggs + Oats",cal:550,p:35,c:55,f:18},
+  {name:"Chicken + Rice",cal:600,p:42,c:65,f:16},{name:"Greek Yogurt Bowl",cal:350,p:22,c:40,f:10},
+  {name:"Salmon + Pasta",cal:650,p:42,c:70,f:18},{name:"Steak + Potato",cal:700,p:48,c:60,f:22},
+];
+
+const dk=(d=new Date())=>d.toISOString().split("T")[0];
+const di=(d=new Date())=>d.getDay();
+const wk=()=>{const s=new Date(2026,4,1),n=new Date();return Math.min(4,Math.max(1,Math.ceil((Math.floor((n-s)/864e5)+1)/7)));};
+const sG=k=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):null}catch{return null}};
+const sS=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){console.error(e)}};
+const uid=()=>Math.random().toString(36).slice(2,8);
+const inputS={background:"#111",border:"1px solid #2a2a2a",borderRadius:8,padding:"8px 10px",color:C.txt,fontSize:13,outline:"none",width:"100%",boxSizing:"border-box",fontFamily:"'DM Sans'"};
+const smallBtn={padding:"5px 10px",borderRadius:6,background:"none",border:"1px solid #333",color:C.sub,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"'DM Sans'"};
+
+function RemoveBtn({label,onConfirm,style}){
+  const[c,setC]=useState(false);const t=useRef(null);
+  useEffect(()=>()=>clearTimeout(t.current),[]);
+  return <button onClick={(e)=>{e.stopPropagation();if(c){onConfirm();setC(false);}else{setC(true);t.current=setTimeout(()=>setC(false),2000);}}} style={{...style,...(c?{borderColor:C.red,color:C.red,background:"#EF444418"}:{})}}>{c?"Sure?":label}</button>;
+}
+function Card({children}){return <div style={{background:C.card,borderRadius:14,padding:"16px 18px",border:`1px solid ${C.cb}`}}>{children}</div>;}
+
+/* ═══════ MAIN APP ═══════ */
+function App(){
+  const[tab,setTab]=useState("workout");
+  const[vd,setVd]=useState(di());
+  const[loaded,setLoaded]=useState(false);
+  const today=dk();const todayIdx=di();const sched=SCHEDULE[vd];
+  const[workouts,setWorkouts]=useState(DEFAULT_WORKOUTS);
+  const[suppList,setSuppList]=useState(DEFAULT_SUPPS);
+  const[sets,setSets]=useState({});
+  const[wts,setWts]=useState({});
+  const[meals,setMeals]=useState([]);
+  const[water,setWater]=useState(0);
+  const[sleepH,setSleepH]=useState(0);
+  const[supps,setSupps]=useState({});
+  const[bw,setBw]=useState("");
+  const[hist,setHist]=useState({});
+  const[timer,setTimer]=useState(0);
+  const[timerOn,setTimerOn]=useState(false);
+  const tRef=useRef(null);
+
+  useEffect(()=>{
+    const d=sG(`day-${today}`);
+    if(d){setSets(d.sets||{});setWts(d.wts||{});setMeals(d.meals||[]);setWater(d.water||0);setSleepH(d.sleep||0);setSupps(d.supps||{});setBw(d.bw||"");}
+    const h=sG("hist");if(h)setHist(h);
+    const cw=sG("custom-workouts");if(cw)setWorkouts(cw);
+    const cs=sG("custom-supps");if(cs)setSuppList(cs);
+    setLoaded(true);
+  },[today]);
+
+  useEffect(()=>{
+    if(timerOn&&timer>0){tRef.current=setTimeout(()=>setTimer(t=>t-1),1000);}
+    else if(timer===0&&timerOn){setTimerOn(false);}
+    return()=>clearTimeout(tRef.current);
+  },[timer,timerOn]);
+
+  const saveW=w=>{setWorkouts(w);sS("custom-workouts",w);};
+  const saveSL=s=>{setSuppList(s);sS("custom-supps",s);};
+
+  const save=useCallback((ov={})=>{
+    const data={sets,wts,meals,water,sleep:sleepH,supps,bw,...ov};
+    sS(`day-${today}`,data);
+    const ms=ov.meals||meals;const cs=ov.sets||sets;
+    const mh={};const wo=workouts[todayIdx];
+    if(wo){wo.exercises.forEach((ex,ei)=>{
+      if(Array.from({length:ex.sets},(_,si)=>cs[`${todayIdx}-${ei}-${si}`]).some(Boolean)){
+        (ex.primary||[]).forEach(m=>{mh[m]=(mh[m]||0)+2;});
+        (ex.secondary||[]).forEach(m=>{mh[m]=(mh[m]||0)+1;});
+      }
+    });}
+    const nH={...hist,[today]:{p:ms.reduce((a,m)=>a+(m.p||0),0),cal:ms.reduce((a,m)=>a+(m.cal||0),0),c:ms.reduce((a,m)=>a+(m.c||0),0),f:ms.reduce((a,m)=>a+(m.f||0),0),water:ov.water??water,sleep:ov.sleep??sleepH,bw:ov.bw??bw,muscles:mh,dayType:sched.type,setsD:Object.values(cs).filter(Boolean).length,setsT:wo?wo.exercises.reduce((a,e)=>a+e.sets,0):0}};
+    setHist(nH);sS("hist",nH);
+  },[sets,wts,meals,water,sleepH,supps,bw,today,hist,todayIdx,sched,workouts]);
+
+  const startTimer=()=>{setTimer(90);setTimerOn(true);};
+  const toggleSet=key=>{const n={...sets,[key]:!sets[key]};setSets(n);save({sets:n});if(!sets[key])startTimer();};
+  const macros=MACROS[sched?.type]||MACROS.rest;
+  const tots={cal:meals.reduce((a,m)=>a+(m.cal||0),0),p:meals.reduce((a,m)=>a+(m.p||0),0),c:meals.reduce((a,m)=>a+(m.c||0),0),f:meals.reduce((a,m)=>a+(m.f||0),0)};
+  const wo=workouts[vd];
+  const totalS=wo?wo.exercises.reduce((a,e)=>a+e.sets,0):0;
+  const doneS=Object.keys(sets).filter(k=>k.startsWith(`${vd}-`)&&sets[k]).length;
+
+  if(!loaded) return <div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:C.bg}}><div style={{color:C.gold,fontSize:32,fontWeight:700,letterSpacing:4,fontFamily:"'Oswald'"}}>BILAL</div></div>;
+
+  return (
+    <div style={{fontFamily:"'DM Sans',sans-serif",background:C.bg,color:C.txt,minHeight:"100vh",maxWidth:480,margin:"0 auto",paddingBottom:80}}>
+      <div style={{padding:"20px 20px 0",background:"linear-gradient(180deg,#1a1610 0%,#0C0C0C 100%)"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+          <div style={{fontSize:11,fontWeight:600,color:C.gold,letterSpacing:2,textTransform:"uppercase"}}>May Lock-In · Week {wk()}</div>
+          <div style={{fontSize:12,color:C.sub}}>{new Date().toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"}).toUpperCase()}</div>
+        </div>
+        <div style={{fontFamily:"'Oswald'",fontSize:48,fontWeight:700,lineHeight:1,letterSpacing:1}}>TODAY</div>
+        <div style={{fontFamily:"'Oswald'",fontSize:48,fontWeight:700,lineHeight:1,color:C.gold,letterSpacing:1}}>{SCHEDULE[todayIdx].title}</div>
+        <div style={{fontSize:13,color:C.sub,marginTop:4,letterSpacing:1,textTransform:"uppercase"}}>{SCHEDULE[todayIdx].sub}</div>
+        <div style={{display:"flex",gap:5,marginTop:14,paddingBottom:14}}>
+          {SCHEDULE.map((s,i)=>(
+            <button key={i} onClick={()=>setVd(i)} style={{flex:1,padding:"7px 0",borderRadius:8,border:`1px solid ${i===vd?C.gold:"#222"}`,background:i===vd?C.gd:"transparent",color:i===vd?C.gold:C.sub,fontSize:11,fontWeight:700,cursor:"pointer",position:"relative",fontFamily:"'DM Sans'"}}>
+              {s.day}{i===todayIdx&&<div style={{width:5,height:5,borderRadius:"50%",background:C.gold,position:"absolute",top:2,right:"calc(50% - 2.5px)"}}/>}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div style={{padding:"0 16px"}}>
+        {tab==="workout"&&<WorkoutView {...{sched,wo,vd,sets,toggleSet,wts,setWts,save,totalS,doneS,timer,timerOn,startTimer,setTimer,setTimerOn,workouts,saveW}}/>}
+        {tab==="nutrition"&&<NutritionView {...{meals,setMeals,tots,macros,sched,save}}/>}
+        {tab==="tracker"&&<TrackerView {...{hist,workouts,todayIdx}}/>}
+        {tab==="vitals"&&<VitalsView {...{water,setWater,sleepH,setSleepH,supps,setSupps,bw,setBw,save,hist,meals,suppList,saveSL}}/>}
+      </div>
+      <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:480,display:"flex",background:"#111",borderTop:"1px solid #1a1a1a",zIndex:100,padding:"6px 0 env(safe-area-inset-bottom,14px)"}}>
+        {[{id:"workout",l:"Workout",e:"◎"},{id:"nutrition",l:"Nutrition",e:"◈"},{id:"tracker",l:"Tracker",e:"◉"},{id:"vitals",l:"Vitals",e:"♡"}].map(t=>(
+          <button key={t.id} onClick={()=>setTab(t.id)} style={{flex:1,background:"none",border:"none",color:tab===t.id?C.gold:C.mut,display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"6px 0",cursor:"pointer",fontFamily:"'DM Sans'"}}>
+            <span style={{fontSize:20}}>{t.e}</span><span style={{fontSize:10,fontWeight:700,letterSpacing:.5}}>{t.l}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ═══════ WORKOUT VIEW ═══════ */
+function WorkoutView({sched,wo,vd,sets,toggleSet,wts,setWts,save,totalS,doneS,timer,timerOn,startTimer,setTimer,setTimerOn,workouts,saveW}){
+  const[expanded,setExpanded]=useState(null);
+  const[adding,setAdding]=useState(false);
+  const[addName,setAddName]=useState("");
+  const[editing,setEditing]=useState(null);
+  const[editForm,setEditForm]=useState({});
+
+  const addExercise=()=>{
+    if(!addName.trim())return;
+    const detected=detectExercise(addName);
+    const newEx={id:uid(),name:detected.name,sets:detected.sets,reps:detected.reps,note:detected.note,primary:detected.primary,secondary:detected.secondary,isCore:detected.isCore};
+    const updated={...workouts};
+    if(!updated[vd])updated[vd]={title:SCHEDULE[vd].title,sub:SCHEDULE[vd].sub,exercises:[]};
+    updated[vd]={...updated[vd],exercises:[...updated[vd].exercises,newEx]};
+    saveW(updated);setAddName("");setAdding(false);
+  };
+  const removeExercise=ei=>{const u={...workouts};u[vd]={...u[vd],exercises:u[vd].exercises.filter((_,i)=>i!==ei)};saveW(u);};
+  const moveExercise=(ei,dir)=>{const exs=[...wo.exercises];const ni=ei+dir;if(ni<0||ni>=exs.length)return;[exs[ei],exs[ni]]=[exs[ni],exs[ei]];const u={...workouts};u[vd]={...u[vd],exercises:exs};saveW(u);};
+  const startEdit=ei=>{const ex=wo.exercises[ei];setEditing(ei);setEditForm({sets:ex.sets,reps:ex.reps,note:ex.note});};
+  const saveEdit=ei=>{const u={...workouts};const exs=[...u[vd].exercises];exs[ei]={...exs[ei],sets:Number(editForm.sets)||exs[ei].sets,reps:editForm.reps||exs[ei].reps,note:editForm.note??exs[ei].note};u[vd]={...u[vd],exercises:exs};saveW(u);setEditing(null);};
+
+  if(!wo||!wo.exercises?.length) return (
+    <div className="fi" style={{textAlign:"center",padding:"40px 20px"}}>
+      <div style={{fontSize:56}}>{sched.icon}</div>
+      <div style={{fontFamily:"'Oswald'",fontSize:28,fontWeight:700,marginTop:12,color:C.gold}}>{sched.title}</div>
+      <div style={{color:C.sub,marginTop:8,fontSize:14}}>{sched.type==="soccer"?"Fresh legs — get after it.":sched.type==="rest"?"Rest up. Hydrate. Meal prep.":"No exercises yet."}</div>
+      {sched.type==="gym"&&<><button onClick={()=>setAdding(true)} style={{marginTop:16,padding:"10px 20px",borderRadius:10,background:C.gold,border:"none",color:"#000",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"'DM Sans'"}}>+ Add First Exercise</button>{adding&&<AddBox {...{addName,setAddName,addExercise,setAdding}}/>}</>}
+    </div>
+  );
+
+  return (
+    <div className="fi">
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:4,marginBottom:12}}>
+        <div>
+          <span style={{fontSize:12,fontWeight:600,color:C.sub,textTransform:"uppercase",letterSpacing:1}}>Sets Completed</span>
+          <div style={{display:"flex",alignItems:"baseline",gap:4,marginTop:2}}>
+            <span style={{fontFamily:"'Oswald'",fontSize:28,fontWeight:700,color:doneS===totalS&&totalS>0?C.grn:C.txt}}>{doneS}</span>
+            <span style={{fontSize:14,color:C.mut}}>/ {totalS}</span>
+          </div>
+        </div>
+        <button onClick={()=>timerOn?(setTimerOn(false),setTimer(0)):startTimer()} style={{padding:"10px 16px",borderRadius:10,border:`1px solid ${timerOn?(timer<=10?C.red:C.gold):"#333"}`,background:timerOn?(timer<=10?"#EF444422":C.gd):C.card,color:timerOn?(timer<=10?C.red:C.gold):C.sub,fontSize:14,fontWeight:700,fontFamily:"'Oswald'",letterSpacing:1,cursor:"pointer",animation:timerOn&&timer<=10?"timerPulse .5s ease infinite":"none"}}>
+          {timerOn?`⏱ ${timer}s`:"⏱ REST 90s"}
+        </button>
+      </div>
+      <div style={{height:3,background:"#222",borderRadius:2,marginBottom:14}}><div style={{height:"100%",width:`${totalS?(doneS/totalS)*100:0}%`,background:`linear-gradient(90deg,${C.gold},#E8C66A)`,borderRadius:2,transition:"width .4s ease"}}/></div>
+
+      {wo.exercises.map((ex,ei)=>{
+        const allD=Array.from({length:ex.sets},(_,si)=>sets[`${vd}-${ei}-${si}`]).every(Boolean);
+        const isExp=expanded===ei;const isEdit=editing===ei;const wKey=`${vd}-${ei}`;
+        return (
+          <div key={ex.id||ei} style={{background:allD?"#22C55E0C":C.card,border:`1px solid ${allD?"#22C55E33":ex.isCore?C.gold+"55":C.cb}`,borderRadius:14,padding:"14px 16px",marginBottom:10,borderLeft:ex.isCore?`3px solid ${C.gold}`:undefined,transition:"all .3s ease"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",cursor:"pointer"}} onClick={()=>{setExpanded(isExp?null:ei);if(editing!==null)setEditing(null);}}>
+              <div style={{flex:1}}>
+                <div style={{fontSize:15,fontWeight:700,color:allD?C.grn:C.txt}}>{ex.name}</div>
+                <div style={{fontSize:12,color:ex.isCore?C.gold:C.sub,fontStyle:"italic",marginTop:3}}>{ex.note}</div>
+              </div>
+              <div style={{fontFamily:"'Oswald'",fontSize:16,fontWeight:600,color:C.gold,whiteSpace:"nowrap",marginLeft:12}}>{ex.sets}×{ex.reps}</div>
+            </div>
+            <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:8}}>
+              {(ex.primary||[]).map(m=><span key={m} style={{fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:4,background:C.gold+"22",color:C.gold}}>{m}</span>)}
+              {(ex.secondary||[]).map(m=><span key={m} style={{fontSize:10,fontWeight:600,padding:"2px 7px",borderRadius:4,background:"#ffffff0a",color:C.sub}}>{m}</span>)}
+            </div>
+            {isExp&&<div style={{marginTop:10}}>
+              {isEdit?<div style={{display:"flex",flexDirection:"column",gap:6,padding:10,background:"#111",borderRadius:8,marginBottom:8}}>
+                <div style={{display:"flex",gap:6}}><div style={{flex:1}}><div style={{fontSize:10,color:C.sub,marginBottom:2}}>Sets</div><input type="number" value={editForm.sets} onChange={e=>setEditForm({...editForm,sets:e.target.value})} style={inputS}/></div><div style={{flex:1}}><div style={{fontSize:10,color:C.sub,marginBottom:2}}>Reps</div><input value={editForm.reps} onChange={e=>setEditForm({...editForm,reps:e.target.value})} style={inputS}/></div></div>
+                <div><div style={{fontSize:10,color:C.sub,marginBottom:2}}>Note</div><input value={editForm.note} onChange={e=>setEditForm({...editForm,note:e.target.value})} style={inputS}/></div>
+                <div style={{display:"flex",gap:6}}><button onClick={()=>saveEdit(ei)} style={{flex:1,padding:"8px",borderRadius:8,background:C.grn,border:"none",color:"#000",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'DM Sans'"}}>Save</button><button onClick={()=>setEditing(null)} style={{padding:"8px 12px",borderRadius:8,background:"none",border:"1px solid #333",color:C.sub,fontSize:12,cursor:"pointer",fontFamily:"'DM Sans'"}}>Cancel</button></div>
+              </div>:<>
+                <div style={{display:"flex",gap:6,marginBottom:8}}>
+                  <button onClick={e=>{e.stopPropagation();startEdit(ei);}} style={smallBtn}>✎ Edit</button>
+                  <button onClick={e=>{e.stopPropagation();moveExercise(ei,-1);}} style={smallBtn}>↑</button>
+                  <button onClick={e=>{e.stopPropagation();moveExercise(ei,1);}} style={smallBtn}>↓</button>
+                  <RemoveBtn label="✕" onConfirm={()=>removeExercise(ei)} style={{...smallBtn,borderColor:C.red+"44",color:C.red}}/>
+                </div>
+                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+                  <span style={{color:C.sub,fontSize:12}}>Weight:</span>
+                  <input type="text" placeholder="e.g. 135" value={wts[wKey]||""} onChange={e=>{const n={...wts,[wKey]:e.target.value};setWts(n);save({wts:n});}} style={{background:"#111",border:"1px solid #2a2a2a",borderRadius:8,padding:"6px 10px",color:C.txt,fontSize:12,width:90,outline:"none",fontFamily:"'DM Sans'"}}/>
+                  <span style={{fontSize:11,color:C.mut}}>lbs</span>
+                </div>
+                <div style={{display:"flex",gap:8}}>
+                  {Array.from({length:ex.sets},(_,si)=>{const key=`${vd}-${ei}-${si}`;const done=!!sets[key];
+                    return <button key={si} onClick={()=>toggleSet(key)} style={{width:46,height:46,borderRadius:"50%",border:`2px solid ${done?C.grn:"#333"}`,background:done?C.grn:"transparent",color:done?"#000":C.sub,fontSize:14,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'DM Sans'",transition:"all .2s ease"}}>{done?"✓":si+1}</button>;
+                  })}
+                </div>
+              </>}
+            </div>}
+          </div>
+        );
+      })}
+      {!adding?<button onClick={()=>setAdding(true)} style={{width:"100%",padding:"12px",borderRadius:12,border:"1px dashed #333",background:"transparent",color:C.sub,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"'DM Sans'",marginTop:4}}>+ Add Exercise</button>:<AddBox {...{addName,setAddName,addExercise,setAdding}}/>}
+      <div style={{height:16}}/>
+    </div>
+  );
+}
+
+function AddBox({addName,setAddName,addExercise,setAdding}){
+  return <Card><div style={{fontSize:12,fontWeight:700,color:C.gold,textTransform:"uppercase",letterSpacing:.5,marginBottom:8}}>Add Exercise</div><div style={{fontSize:11,color:C.sub,marginBottom:8}}>Type any exercise — muscles detected automatically.</div><div style={{display:"flex",gap:8}}><input placeholder="e.g. Dumbbell Flyes, Cable Crunches..." value={addName} onChange={e=>setAddName(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addExercise()} style={{...inputS,flex:1,fontSize:14}}/><button onClick={addExercise} style={{padding:"10px 16px",borderRadius:8,background:C.gold,border:"none",color:"#000",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"'DM Sans'",whiteSpace:"nowrap"}}>Add</button></div><button onClick={()=>setAdding(false)} style={{marginTop:8,background:"none",border:"none",color:C.sub,fontSize:12,cursor:"pointer",fontFamily:"'DM Sans'"}}>Cancel</button></Card>;
+}
+
+/* ═══════ NUTRITION VIEW ═══════ */
+function NutritionView({meals,setMeals,tots,macros,sched,save}){
+  const[desc,setDesc]=useState("");
+  const[aiResult,setAiResult]=useState(null);
+  const[showManual,setShowManual]=useState(false);
+  const[form,setForm]=useState({name:"",cal:"",p:"",c:"",f:"",flex:false});
+
+  const estimateMeal=()=>{if(!desc.trim())return;const r=estimateMealLocal(desc);setAiResult(r);};
+  const confirmAi=(flex=false)=>{if(!aiResult)return;const m={...aiResult,flex,time:new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})};const next=[...meals,m];setMeals(next);save({meals:next});setDesc("");setAiResult(null);};
+  const addManual=()=>{if(!form.name)return;const m={name:form.name,cal:+form.cal||0,p:+form.p||0,c:+form.c||0,f:+form.f||0,flex:form.flex,time:new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})};const next=[...meals,m];setMeals(next);save({meals:next});setForm({name:"",cal:"",p:"",c:"",f:"",flex:false});setShowManual(false);};
+  const removeMeal=i=>{const next=meals.filter((_,j)=>j!==i);setMeals(next);save({meals:next});};
+  const addQuick=q=>{const next=[...meals,{...q,flex:false,time:new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}];setMeals(next);save({meals:next});};
+  const flexN=meals.filter(m=>m.flex).length;
+  const dayLabel=sched.type==="soccer"?"Soccer Day":sched.type==="gym"?"Training Day":"Rest Day";
+
+  return (
+    <div className="fi" style={{display:"flex",flexDirection:"column",gap:12,paddingTop:8}}>
+      <div style={{fontFamily:"'Oswald'",fontSize:28,fontWeight:700}}>NUTRITION</div>
+      <div style={{fontSize:12,color:C.gold,fontWeight:600,textTransform:"uppercase",letterSpacing:1,marginTop:-8}}>{dayLabel} · {macros.cal} cal target</div>
+      <Card>
+        {[{l:"Calories",cur:tots.cal,tar:macros.cal,col:C.gold,u:""},{l:"Protein",cur:tots.p,tar:macros.p,col:C.grn,u:"g"},{l:"Carbs",cur:tots.c,tar:macros.c,col:C.blu,u:"g"},{l:"Fat",cur:tots.f,tar:macros.f,col:C.pur,u:"g"}].map((m,i)=>(
+          <div key={i} style={{marginBottom:i<3?12:0}}>
+            <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:4}}><span style={{color:C.sub,fontWeight:600}}>{m.l}</span><span style={{color:C.txt,fontWeight:600}}>{m.cur}{m.u} <span style={{color:C.mut}}>/ {m.tar}{m.u}</span></span></div>
+            <div style={{height:6,background:"#222",borderRadius:3}}><div style={{height:"100%",width:`${Math.min(100,(m.cur/m.tar)*100)}%`,background:m.col,borderRadius:3,transition:"width .3s"}}/></div>
+          </div>
+        ))}
+      </Card>
+      <Card>
+        <div style={{fontSize:13,fontWeight:700,color:C.sub,textTransform:"uppercase",letterSpacing:.5,marginBottom:10}}>Log a Meal</div>
+        <div style={{display:"flex",gap:8}}>
+          <input placeholder="Describe your meal..." value={desc} onChange={e=>setDesc(e.target.value)} onKeyDown={e=>e.key==="Enter"&&estimateMeal()} style={{...inputS,flex:1,fontSize:14}}/>
+          <button onClick={estimateMeal} style={{padding:"10px 16px",borderRadius:8,background:C.gold,border:"none",color:"#000",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"'DM Sans'",whiteSpace:"nowrap"}}>Estimate</button>
+        </div>
+        {aiResult&&<div style={{marginTop:12,padding:14,background:"#111",borderRadius:10,border:`1px solid ${C.gold}33`}}>
+          <div style={{fontSize:14,fontWeight:700,color:C.gold,marginBottom:6}}>{aiResult.name}</div>
+          <div style={{display:"flex",gap:12,fontSize:12,color:C.sub,marginBottom:12,flexWrap:"wrap"}}><span><b style={{color:C.txt}}>{aiResult.cal}</b> cal</span><span><b style={{color:C.grn}}>{aiResult.p}g</b> P</span><span><b style={{color:C.blu}}>{aiResult.c}g</b> C</span><span><b style={{color:C.pur}}>{aiResult.f}g</b> F</span></div>
+          <div style={{display:"flex",gap:8}}><button onClick={()=>confirmAi(false)} style={{flex:1,padding:"8px",borderRadius:8,background:C.grn,border:"none",color:"#000",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'DM Sans'"}}>🥗 Clean</button><button onClick={()=>confirmAi(true)} style={{flex:1,padding:"8px",borderRadius:8,background:"#D4A84333",border:`1px solid ${C.gold}44`,color:C.gold,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'DM Sans'"}}>🍕 Flex</button></div>
+        </div>}
+      </Card>
+      <Card>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}><div style={{fontSize:13,fontWeight:700,color:C.sub,textTransform:"uppercase",letterSpacing:.5}}>80/20</div><button onClick={()=>setShowManual(!showManual)} style={{background:"none",border:"1px solid #333",borderRadius:6,padding:"4px 10px",fontSize:11,color:C.sub,cursor:"pointer",fontFamily:"'DM Sans'"}}>Manual +</button></div>
+        <div style={{display:"flex",alignItems:"center",gap:10}}><div style={{padding:"5px 10px",borderRadius:6,fontSize:12,fontWeight:700,background:C.gd2,color:C.grn}}>{meals.length-flexN} Clean</div><div style={{padding:"5px 10px",borderRadius:6,fontSize:12,fontWeight:700,background:"#D4A84322",color:C.gold}}>{flexN} Flex</div><div style={{marginLeft:"auto",fontSize:12,color:C.sub}}>{meals.length>0?`${Math.round(((meals.length-flexN)/meals.length)*100)}%`:""}</div></div>
+      </Card>
+      {showManual&&<Card><div style={{display:"flex",flexDirection:"column",gap:6}}><input placeholder="Meal name" value={form.name} onChange={e=>setForm({...form,name:e.target.value})} style={inputS}/><div style={{display:"flex",gap:6}}><input placeholder="Cal" type="number" value={form.cal} onChange={e=>setForm({...form,cal:e.target.value})} style={{...inputS,flex:1}}/><input placeholder="Pro" type="number" value={form.p} onChange={e=>setForm({...form,p:e.target.value})} style={{...inputS,flex:1}}/><input placeholder="Carb" type="number" value={form.c} onChange={e=>setForm({...form,c:e.target.value})} style={{...inputS,flex:1}}/><input placeholder="Fat" type="number" value={form.f} onChange={e=>setForm({...form,f:e.target.value})} style={{...inputS,flex:1}}/></div><div style={{display:"flex",gap:8}}><button onClick={()=>setForm({...form,flex:!form.flex})} style={{flex:1,padding:"8px",borderRadius:8,border:`1px solid ${form.flex?C.gold+"66":"#333"}`,background:form.flex?"#D4A84322":C.card,color:form.flex?C.gold:C.sub,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'DM Sans'"}}>{form.flex?"🍕 Flex":"🥗 Clean"}</button><button onClick={addManual} style={{padding:"8px 16px",borderRadius:8,background:C.gold,border:"none",color:"#000",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'DM Sans'"}}>Save</button></div></div></Card>}
+      {meals.length>0&&<Card><div style={{fontSize:13,fontWeight:700,color:C.sub,textTransform:"uppercase",letterSpacing:.5,marginBottom:6}}>Today's Meals</div>{meals.map((m,i)=>(<div key={i} style={{display:"flex",alignItems:"center",padding:"10px 0",borderTop:i>0?"1px solid #1a1a1a":"none",gap:8}}><div style={{flex:1}}><div style={{display:"flex",alignItems:"center",gap:6}}><span style={{fontSize:13,fontWeight:600}}>{m.name}</span>{m.flex&&<span style={{fontSize:9,fontWeight:700,background:"#D4A84333",color:C.gold,padding:"1px 5px",borderRadius:4}}>FLEX</span>}</div><div style={{fontSize:11,color:C.sub,marginTop:2}}>{m.cal} cal · {m.p}g P · {m.c}g C · {m.f}g F{m.time?` · ${m.time}`:""}</div></div><button onClick={()=>removeMeal(i)} style={{background:"none",border:"none",color:C.mut,fontSize:14,cursor:"pointer"}}>✕</button></div>))}</Card>}
+      <Card><div style={{fontSize:13,fontWeight:700,color:C.sub,textTransform:"uppercase",letterSpacing:.5,marginBottom:10}}>Quick Add</div><div style={{display:"flex",flexWrap:"wrap",gap:6}}>{QUICK_MEALS.map((q,i)=>(<button key={i} onClick={()=>addQuick(q)} style={{display:"flex",flexDirection:"column",gap:2,padding:"8px 11px",borderRadius:8,background:"#111",border:"1px solid #222",color:C.txt,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'DM Sans'"}}>{q.name}<span style={{fontSize:10,color:C.sub}}>{q.cal} cal · {q.p}g P</span></button>))}</div></Card>
+      <div style={{height:12}}/>
+    </div>
+  );
+}
+
+/* ═══════ TRACKER VIEW ═══════ */
+function TrackerView({hist,workouts,todayIdx}){
+  const wm={};const now=new Date();
+  for(let i=0;i<7;i++){const d=new Date(now);d.setDate(d.getDate()-i);const h=hist[dk(d)];if(h?.muscles)Object.entries(h.muscles).forEach(([m,v])=>{wm[m]=(wm[m]||0)+v;});const dow=d.getDay();if((dow===2||dow===5)&&h){["Quads","Hamstrings","Glutes","Calves","Core","Hip Flexors"].forEach(m=>{wm[m]=(wm[m]||0)+2;});}}
+  const mx=Math.max(1,...Object.values(wm));
+  const getHC=v=>{if(!v)return"#1a1a1a";const p=v/mx;return p>.7?C.grn:p>.4?C.gold:"#D4A84366";};
+  const streak=(()=>{let s=0;const d=new Date();d.setDate(d.getDate()-1);while(hist[dk(d)]){s++;d.setDate(d.getDate()-1);}return s;})();
+  const l14=[];for(let i=13;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);l14.push({date:dk(d).slice(5),dn:["S","M","T","W","T","F","S"][d.getDay()],data:hist[dk(d)]||null});}
+  const pD=l14.filter(d=>d.data?.p).map(d=>({label:d.date,val:d.data.p}));
+  const cD=l14.filter(d=>d.data?.cal).map(d=>({label:d.date,val:d.data.cal}));
+  const wD=Object.entries(hist).filter(([_,v])=>v.bw).sort(([a],[b])=>a.localeCompare(b)).slice(-14).map(([d,v])=>({label:d.slice(5),val:+v.bw}));
+  const wDays=l14.filter(d=>d.data?.setsT>0);const cDays=wDays.filter(d=>d.data.setsD===d.data.setsT).length;
+  const upper=["Chest","Front Delts","Side Delts","Rear Delts","Triceps","Biceps","Upper Back","Lats"].reduce((a,m)=>a+(wm[m]||0),0);
+  const lower=["Quads","Hamstrings","Glutes","Calves","Hip Flexors"].reduce((a,m)=>a+(wm[m]||0),0);
+  const core=wm["Core"]||0;
+
+  return (
+    <div className="fi" style={{display:"flex",flexDirection:"column",gap:12,paddingTop:8}}>
+      <div style={{fontFamily:"'Oswald'",fontSize:28,fontWeight:700}}>TRACKER</div>
+      <div style={{fontSize:12,color:C.gold,fontWeight:600,textTransform:"uppercase",letterSpacing:1,marginTop:-8}}>{streak>0?`${streak} day streak`:"Day 1"} · Week {wk()}</div>
+      <div style={{display:"flex",gap:8}}>{[{n:streak,l:"Streak"},{n:`${cDays}/${wDays.length}`,l:"Workouts"},{n:`Wk ${wk()}`,l:"of 4"}].map((s,i)=>(<div key={i} style={{flex:1,background:C.card,borderRadius:12,padding:"12px 10px",textAlign:"center",border:`1px solid ${C.cb}`}}><div style={{fontFamily:"'Oswald'",fontSize:22,fontWeight:700,color:C.gold}}>{s.n}</div><div style={{fontSize:10,color:C.sub,textTransform:"uppercase",marginTop:2}}>{s.l}</div></div>))}</div>
+      <Card>
+        <div style={{fontSize:13,fontWeight:700,color:C.sub,textTransform:"uppercase",letterSpacing:.5,marginBottom:12}}>Muscle Coverage · This Week</div>
+        <div style={{display:"flex",gap:8,marginBottom:14}}>{[{l:"Upper",v:upper,c:C.blu},{l:"Lower",v:lower,c:C.grn},{l:"Core",v:core,c:C.gold}].map((g,i)=>(<div key={i} style={{flex:1,textAlign:"center",padding:"10px 0",background:g.c+"15",borderRadius:10,border:`1px solid ${g.c}33`}}><div style={{fontFamily:"'Oswald'",fontSize:20,fontWeight:700,color:g.c}}>{g.v}</div><div style={{fontSize:10,color:C.sub,textTransform:"uppercase"}}>{g.l}</div></div>))}</div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:6}}>{MUSCLES.map(m=>{const v=wm[m]||0;const col=getHC(v);return <div key={m} style={{padding:"6px 10px",borderRadius:8,background:col+"22",border:`1px solid ${col}55`,fontSize:11,fontWeight:600,color:v?col:C.mut}}>{m}{v>0&&<span style={{fontWeight:700}}> ·{v}</span>}</div>;})}</div>
+        <div style={{display:"flex",gap:12,marginTop:12,fontSize:10,color:C.sub}}>{[{c:C.grn,l:"High"},{c:C.gold,l:"Med"},{c:"#D4A84366",l:"Light"},{c:"#1a1a1a",l:"None"}].map(x=><span key={x.l}><span style={{display:"inline-block",width:8,height:8,borderRadius:2,background:x.c,marginRight:4}}/>{x.l}</span>)}</div>
+      </Card>
+      <Card><div style={{fontSize:13,fontWeight:700,color:C.sub,textTransform:"uppercase",letterSpacing:.5,marginBottom:10}}>14-Day Activity</div><div style={{display:"flex",gap:4,justifyContent:"space-between"}}>{l14.map((d,i)=>{const w=d.data?.setsT>0;const ok=w&&d.data.setsD===d.data.setsT;return <div key={i} style={{flex:1,textAlign:"center"}}><div style={{fontSize:9,color:C.mut,marginBottom:3}}>{d.dn}</div><div style={{height:28,borderRadius:4,background:ok?C.grn:w?"#D4A84366":d.data?"#ffffff15":"#111",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:ok?"#000":C.mut}}>{ok?"✓":w?"½":""}</div><div style={{fontSize:8,color:C.mut,marginTop:2}}>{d.date}</div></div>;})}</div></Card>
+      {pD.length>1&&<Card><div style={{fontSize:13,fontWeight:700,color:C.sub,textTransform:"uppercase",letterSpacing:.5,marginBottom:10}}>Protein Trend</div><MiniChart data={pD} target={155} color={C.grn} unit="g"/></Card>}
+      {cD.length>1&&<Card><div style={{fontSize:13,fontWeight:700,color:C.sub,textTransform:"uppercase",letterSpacing:.5,marginBottom:10}}>Calorie Trend</div><MiniChart data={cD} target={2500} color={C.gold} unit=""/></Card>}
+      {wD.length>1&&<Card><div style={{fontSize:13,fontWeight:700,color:C.sub,textTransform:"uppercase",letterSpacing:.5,marginBottom:10}}>Weight Trend</div><MiniChart data={wD} color={C.blu} unit=" lbs"/></Card>}
+      <Card><div style={{fontSize:13,fontWeight:700,color:C.sub,textTransform:"uppercase",letterSpacing:.5,marginBottom:10}}>Weekly Averages</div>{(()=>{const d7=[];for(let i=0;i<7;i++){const d=new Date();d.setDate(d.getDate()-i);const h=hist[dk(d)];if(h)d7.push(h);}if(!d7.length) return <div style={{fontSize:13,color:C.mut}}>Log a few days to see averages.</div>;const avg=(a,k)=>Math.round(a.reduce((s,d)=>s+(d[k]||0),0)/a.length);return <div style={{display:"flex",flexWrap:"wrap",gap:8}}>{[{l:"Avg Cal",v:avg(d7,"cal"),c:C.gold},{l:"Avg Protein",v:avg(d7,"p")+"g",c:C.grn},{l:"Avg Water",v:(avg(d7,"water")*.25).toFixed(1)+"L",c:C.blu},{l:"Avg Sleep",v:avg(d7,"sleep")+"h",c:C.pur}].map((s,i)=>(<div key={i} style={{flex:1,minWidth:"45%",padding:"10px 12px",background:"#111",borderRadius:10,border:"1px solid #1a1a1a"}}><div style={{fontSize:11,color:C.sub,marginBottom:2}}>{s.l}</div><div style={{fontFamily:"'Oswald'",fontSize:20,fontWeight:700,color:s.c}}>{s.v}</div></div>))}</div>;})()}</Card>
+      <div style={{height:12}}/>
+    </div>
+  );
+}
+
+function MiniChart({data,target,color,unit}){
+  if(data.length<2) return null;
+  const vals=data.map(d=>d.val);const mn=Math.min(...vals,target||Infinity)-5;const mx=Math.max(...vals,target||0)+5;const rng=mx-mn||1;const w=Math.max(260,data.length*36);const h=80;
+  const pts=data.map((d,i)=>({x:16+(i/(data.length-1))*(w-32),y:h-10-((d.val-mn)/rng)*(h-25)}));
+  const ln=pts.map((p,i)=>`${i?"L":"M"} ${p.x} ${p.y}`).join(" ");
+  const tY=target?h-10-((target-mn)/rng)*(h-25):null;
+  return <div style={{overflowX:"auto"}}><svg width={w} height={h} viewBox={`0 0 ${w} ${h}`}>{tY!=null&&<><line x1={10} y1={tY} x2={w-10} y2={tY} stroke={color} strokeWidth="1" strokeDasharray="4,4" opacity="0.3"/><text x={w-8} y={tY-4} textAnchor="end" fill={color} fontSize="8" opacity="0.5">{target}{unit}</text></>}<path d={ln} fill="none" stroke={color} strokeWidth="2"/>{pts.map((p,i)=><g key={i}><circle cx={p.x} cy={p.y} r="3" fill={color}/><text x={p.x} y={p.y-8} textAnchor="middle" fill={C.sub} fontSize="8" fontFamily="'DM Sans'">{vals[i]}{unit}</text><text x={p.x} y={h-1} textAnchor="middle" fill={C.mut} fontSize="7" fontFamily="'DM Sans'">{data[i].label}</text></g>)}</svg></div>;
+}
+
+/* ═══════ VITALS VIEW ═══════ */
+function VitalsView({water,setWater,sleepH,setSleepH,supps,setSupps,bw,setBw,save,hist,meals,suppList,saveSL}){
+  const[addingSup,setAddingSup]=useState(false);
+  const[supForm,setSupForm]=useState({name:"",dose:"",when:""});
+  const addSup=()=>{if(!supForm.name)return;saveSL([...suppList,{id:uid(),name:supForm.name,dose:supForm.dose,when:supForm.when}]);setSupForm({name:"",dose:"",when:""});setAddingSup(false);};
+  const removeSup=id=>{saveSL(suppList.filter(s=>s.id!==id));const nc={...supps};delete nc[id];setSupps(nc);save({supps:nc});};
+
+  return (
+    <div className="fi" style={{display:"flex",flexDirection:"column",gap:12,paddingTop:8}}>
+      <div style={{fontFamily:"'Oswald'",fontSize:28,fontWeight:700}}>VITALS</div>
+      <Card><div style={{fontSize:13,fontWeight:700,color:C.sub,textTransform:"uppercase",letterSpacing:.5,marginBottom:10}}>Water · {(water*.25).toFixed(1)}L / 3L</div><div style={{display:"flex",flexWrap:"wrap",gap:6,justifyContent:"center"}}>{Array.from({length:12},(_,i)=>(<button key={i} onClick={()=>{const n=i<water?i:i+1;setWater(n);save({water:n});}} style={{width:46,height:46,borderRadius:10,border:`1px solid ${i<water?"#3B82F644":"#222"}`,background:i<water?"#3B82F622":"#111",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,cursor:"pointer",opacity:i<water?1:.3,transition:"all .2s"}}>💧</button>))}</div><div style={{fontSize:11,color:C.mut,marginTop:8,textAlign:"center"}}>Each drop = 250ml</div></Card>
+      <Card><div style={{fontSize:13,fontWeight:700,color:C.sub,textTransform:"uppercase",letterSpacing:.5,marginBottom:10}}>Sleep</div><div style={{display:"flex",alignItems:"center",gap:12}}><input type="range" min="0" max="12" step="0.5" value={sleepH} onChange={e=>{setSleepH(+e.target.value);save({sleep:+e.target.value});}}/><div style={{fontFamily:"'Oswald'",fontSize:26,fontWeight:700,color:sleepH>=7?C.grn:C.gold,minWidth:55,textAlign:"center"}}>{sleepH}h</div></div></Card>
+      <Card>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}><div style={{fontSize:13,fontWeight:700,color:C.sub,textTransform:"uppercase",letterSpacing:.5}}>Supplements</div><button onClick={()=>setAddingSup(!addingSup)} style={{background:C.gold,color:"#000",border:"none",borderRadius:6,padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"'DM Sans'"}}>+ Add</button></div>
+        {addingSup&&<div style={{display:"flex",flexDirection:"column",gap:6,padding:10,background:"#111",borderRadius:8,marginBottom:10}}><input placeholder="Name" value={supForm.name} onChange={e=>setSupForm({...supForm,name:e.target.value})} style={inputS}/><div style={{display:"flex",gap:6}}><input placeholder="Dose" value={supForm.dose} onChange={e=>setSupForm({...supForm,dose:e.target.value})} style={{...inputS,flex:1}}/><input placeholder="When" value={supForm.when} onChange={e=>setSupForm({...supForm,when:e.target.value})} style={{...inputS,flex:1}}/></div><div style={{display:"flex",gap:6}}><button onClick={addSup} style={{flex:1,padding:"8px",borderRadius:8,background:C.grn,border:"none",color:"#000",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'DM Sans'"}}>Save</button><button onClick={()=>setAddingSup(false)} style={{padding:"8px 12px",borderRadius:8,background:"none",border:"1px solid #333",color:C.sub,fontSize:12,cursor:"pointer",fontFamily:"'DM Sans'"}}>Cancel</button></div></div>}
+        {suppList.map(s=>(<div key={s.id} style={{display:"flex",alignItems:"center",gap:12,padding:"8px 0",borderBottom:"1px solid #1a1a1a"}}><button onClick={()=>{const n={...supps,[s.id]:!supps[s.id]};setSupps(n);save({supps:n});}} style={{width:30,height:30,borderRadius:8,border:`2px solid ${supps[s.id]?C.grn:"#333"}`,background:supps[s.id]?C.grn:"transparent",color:supps[s.id]?"#000":C.txt,fontSize:14,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{supps[s.id]?"✓":""}</button><div style={{flex:1}}><div style={{fontSize:13,fontWeight:600}}>{s.name}</div><div style={{fontSize:11,color:C.sub}}>{s.dose}{s.when?` · ${s.when}`:""}</div></div><RemoveBtn label="✕" onConfirm={()=>removeSup(s.id)} style={{background:"none",border:"none",color:C.mut,fontSize:12,cursor:"pointer",fontFamily:"'DM Sans'",padding:"4px 8px"}}/></div>))}
+      </Card>
+      <Card><div style={{fontSize:13,fontWeight:700,color:C.sub,textTransform:"uppercase",letterSpacing:.5,marginBottom:10}}>Body Weight</div><div style={{display:"flex",alignItems:"center",gap:8}}><input type="number" placeholder="148" value={bw} onChange={e=>{setBw(e.target.value);save({bw:e.target.value});}} style={{background:"#111",border:"1px solid #2a2a2a",borderRadius:8,padding:"8px 12px",color:C.txt,fontSize:20,fontWeight:700,width:90,textAlign:"center",outline:"none",fontFamily:"'Oswald'"}}/><span style={{color:C.sub,fontSize:14}}>lbs</span></div></Card>
+      <Card><div style={{fontSize:13,fontWeight:700,color:C.sub,textTransform:"uppercase",letterSpacing:.5,marginBottom:10}}>Daily Checklist</div>{[{l:"Protein 155g+",d:(meals||[]).reduce((a,m)=>a+(m.p||0),0)>=155},{l:"Water 3L+",d:water>=12},{l:"Creatine",d:!!supps.creatine},{l:"7+ hrs sleep",d:sleepH>=7},{l:"Weight logged",d:!!bw}].map((c,i)=>(<div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"5px 0",opacity:c.d?1:.4}}><span style={{color:c.d?C.grn:C.mut,fontWeight:700,fontSize:14}}>{c.d?"✓":"○"}</span><span style={{fontSize:13}}>{c.l}</span></div>))}</Card>
+      <div style={{height:12}}/>
+    </div>
+  );
+}
+
+ReactDOM.render(React.createElement(App),document.getElementById('root'));
+</script>
+</body>
+</html>
